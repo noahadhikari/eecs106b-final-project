@@ -8,19 +8,17 @@ import matplotlib.pyplot as plt
 
 
 def get_cubic_bezier(params, theta):
-    x, y, c0, c1 = params
+    x0, x1, x2, x3 = params
 
     p0 = np.array([0, 0])
-    v0 = c0 * np.array([0, -1])
-    v1 = c1 * np.array([np.cos(theta), np.sin(theta)])
-    p1 = np.array([x, y])
+    pc0 = np.array([0, x0])
 
-    # set the control points to be 1 unit of time in velocity vector from the endpoint
+    p1 = np.array([x2, x3])
 
-    pc0 = p0 + v0
-    pc1 = p1 - v1
+    dt = (p1[0] - x1) / np.cos(theta)
+    pc1y = p1[1] - dt * np.sin(theta)
+    pc1 = np.array([x1, pc1y])
 
-    # define the curve
     nodes = np.asfortranarray([p0, pc0, pc1, p1]).T
     curve = Curve(nodes, degree=3)
 
@@ -72,7 +70,7 @@ def plot_curve(params, theta):
 
 def main():
 
-    theta = 0
+    theta = np.pi
     l = 3
 
     p0 = np.array([0, 0])
@@ -86,25 +84,27 @@ def main():
     # control point is the intersection of the two tangent lines at the endpoints
     # arclength of curve = l (known)
 
-    # solve for p1 = (x0, x1) (and thus the control point) given the constraints
+    # solve for the following given the constraints
+    # pc0 = (0, -x0) (along the tangent line at p0)
+    # pc1 = (x1, f(x1)) along the tangent line at p1
+    # p1 = (x2, x3)
 
     # define the objective
-    # params are (x0, x1, c0, c1)
     compute_objective = lambda params: objective(params, theta, l)
 
     # initial guess
-    x0 = [0.5, -0.5, 1, 1]
+    x0 = [-l/2, l/2, -l/2, -l/2]
 
     # define the constraints
     constraints = f'''
-    x0 >= 0
-    x0 <= {l}
-    x1 >= -{l}
-    x1 <= 0
-    x2 >= 0.1
-    x2 <= 1000
-    x3 >= 0.1
-    x3 <= 1000
+    x0 <= 0
+    x0 >= -1000
+    x1 >= 0
+    x1 <= {l}
+    x2 >= 0
+    x2 <= {l}
+    x3 <= 0
+    x3 >= -{l}
     '''
 
     generated_constraints = generate_constraint(generate_solvers(constraints, nvars=4))
