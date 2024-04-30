@@ -47,7 +47,7 @@ def get_quadratic_bezier(params, theta):
         raise ValueError("Lines are parallel, cannot find intersection point.")
     s, t = np.linalg.inv(A) @ (p0 - p1)
 
-    pc = p1 + s * v1
+    pc = p0 + t * v0
 
     # define the curve
     nodes = np.asfortranarray([p0, pc, p1]).T
@@ -58,8 +58,9 @@ def get_quadratic_bezier(params, theta):
 def objective(params, theta, l):
     def obj(curve):
         p1 = curve.evaluate(1.)
-        theta_f = np.pi / 2 - np.arctan2(p1[1], p1[0])
-        return (curve.length - l) ** 2 + (np.sin(theta) - np.sin(theta_f)) ** 2 + (np.cos(theta) - np.cos(theta_f)) ** 2
+        theta_f = np.arctan2(p1[0], -p1[1])
+
+        return 10 * (curve.length - l) ** 2 + (np.sin(theta) - np.sin(theta_f)) ** 2 + (np.cos(theta) - np.cos(theta_f)) ** 2
 
     cubic = get_cubic_bezier(params, theta)
 
@@ -72,8 +73,8 @@ def plot_curve(params, theta):
 
 def main():
 
-    theta = 0
-    l = 3
+    theta = np.pi / 2
+    l = 1
 
     p0 = np.array([0, 0])
     v0 = np.array([0, -1])
@@ -95,22 +96,24 @@ def main():
     # initial guess
     x0 = [0.5, -0.5, 1, 1]
 
+    # max c1 is x0 / np.cos(theta)
+
     # define the constraints
     constraints = f'''
     x0 >= 0
     x0 <= {l}
     x1 >= -{l}
     x1 <= 0
-    x2 >= 0.1
-    x2 <= 1000
-    x3 >= 0.1
-    x3 <= 1000
+    x2 >= 0.0
+    x2 <= 10
+    x3 >= 0.0
+    x3 <= x0 / {np.abs(np.cos(theta)) + 1e-6}
     '''
 
     generated_constraints = generate_constraint(generate_solvers(constraints, nvars=4))
 
     # solve the problem
-    result = diffev2(compute_objective, x0=x0, constraints=generated_constraints, npop=40, gtol=10)
+    result = diffev2(compute_objective, x0=x0, constraints=generated_constraints, npop=40, gtol=100)
     plot_curve(result, theta)
 
 
