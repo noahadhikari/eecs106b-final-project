@@ -55,26 +55,30 @@ def get_quadratic_bezier(params, theta):
 
     return curve
 
-def objective(params, theta, l):
+def objective(params, theta, l, bezier_fn):
     def obj(curve):
         p1 = curve.evaluate(1.)
         theta_f = np.arctan2(p1[0], -p1[1])
 
-        return 10 * (curve.length - l) ** 2 + (np.sin(theta) - np.sin(theta_f)) ** 2 + (np.cos(theta) - np.cos(theta_f)) ** 2
+        return 10 / l * (curve.length - l) ** 2 + (np.sin(theta) - np.sin(theta_f)) ** 2 + (np.cos(theta) - np.cos(theta_f)) ** 2
 
-    cubic = get_cubic_bezier(params, theta)
 
-    return obj(cubic)
+    curve = bezier_fn(params, theta)
 
-def plot_curve(params, theta):
-    curve = get_cubic_bezier(params, theta)
-    curve.plot(num_pts=100)
+    return obj(curve)
+
+def plot_curve(params, theta, l_max, bezier_fn):
+    curve = bezier_fn(params, theta)
+    ax = plt.subplot(111)
+    plt.xlim(-0.05, l_max)
+    plt.ylim(-l_max, 0.05)
+    curve.plot(num_pts=100, ax=ax)
     plt.show(block=True)
 
 def main():
 
-    theta = np.pi / 2
-    l = 1
+    theta = 0.1
+    l = 10
 
     p0 = np.array([0, 0])
     v0 = np.array([0, -1])
@@ -91,7 +95,9 @@ def main():
 
     # define the objective
     # params are (x0, x1, c0, c1)
-    compute_objective = lambda params: objective(params, theta, l)
+
+    bezier_fn = get_quadratic_bezier if theta <= np.pi / 3 else get_cubic_bezier
+    compute_objective = lambda params: objective(params, theta, l, bezier_fn)
 
     # initial guess
     x0 = [0.5, -0.5, 1, 1]
@@ -114,7 +120,7 @@ def main():
 
     # solve the problem
     result = diffev2(compute_objective, x0=x0, constraints=generated_constraints, npop=40, gtol=100)
-    plot_curve(result, theta)
+    plot_curve(result, theta, l, bezier_fn)
 
 
 
