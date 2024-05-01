@@ -36,13 +36,28 @@ def get_cubic_bezier(params, theta):
 
     return curve
 
-def get_quadratic_bezier(params, theta):
-    a, c0, c1 = params
+def get_quadratic_bezier_cp(params, theta):
+    a, c0, _ = params
 
     p0 = np.array([0, 0])
+    p1 = a * np.array([np.sin(theta), -np.cos(theta)])
+
+    # optimize over the control point directly
+    pc = np.array([0, -c0])
+
+    # define the curve
+    nodes = np.asfortranarray([p0, pc, p1]).T
+    curve = Curve(nodes, degree=2)
+
+    return curve
+
+def get_quadratic_bezier_right_angle(params, theta):
+    a, _, _ = params
+
+    p0 = np.array([0, 0])
+    p1 = a * np.array([np.sin(theta), -np.cos(theta)])
     v0 = np.array([0, -1])
     v1 = np.array([np.cos(theta), np.sin(theta)])
-    p1 = a * np.array([np.sin(theta), -np.cos(theta)])
 
     # find the intersection between the two tangent lines
     # f0(t) = p0 + tv0
@@ -67,7 +82,12 @@ def get_quadratic_bezier(params, theta):
 
 def objective(params, theta, l, bezier_fn):
     def obj(curve):
-        return 1 / l * (curve.length - l) ** 2
+        p0 = curve.nodes[:, 0].reshape(2, 1)
+        p1 = curve.nodes[:, -1].reshape(2, 1)
+        p2 = curve.nodes[:, -2].reshape(2, 1)
+        angle = find_angle(p0, p1, p2)
+        return 1 / l * (curve.length - l) ** 2 + (np.sin(np.pi/2) - np.sin(angle)) ** 2 + (np.cos(np.pi/2) - np.cos(angle)) ** 2
+
 
 
     return obj(bezier_fn(params, theta))
@@ -92,16 +112,13 @@ def plot_curve(params, theta, l_max, bezier_fn, ax=None):
     # plot bezier control points, and lines from endpoints to control point
 
     # connect the dots
-    for i in range(len(curve.nodes[0]) - 1):
-        plt.plot(curve.nodes[0, i:i + 2], curve.nodes[1, i:i + 2], 'ro--')
+    # for i in range(len(curve.nodes[0]) - 1):
+    #     plt.plot(curve.nodes[0, i:i + 2], curve.nodes[1, i:i + 2], 'ro--')
 
-
+    print(f"Curve length for {bezier_fn.__name__}: ", curve.length)
     curve.plot(num_pts=100, ax=ax)
 
 def main():
-
-    theta = np.pi/1.5
-    l = 1
 
     # f : R -> R^2, t in [0, 1] -> (x(t), y(t)) given by a quadratic bezier curve
     # endpoints are p0 (known) and p1 (unknown)
@@ -114,7 +131,10 @@ def main():
     # define the objective
     # params are (a)
 
-    for bezier_fn in get_quadratic_bezier, get_cubic_bezier:
+
+    theta = np.pi / 3
+    l = 1
+    for bezier_fn in get_quadratic_bezier_cp, get_quadratic_bezier_right_angle, get_cubic_bezier:
         try:
             compute_objective = lambda params: objective(params, theta, l, bezier_fn)
 
