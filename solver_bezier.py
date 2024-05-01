@@ -77,7 +77,7 @@ def plot_curve(params, theta, l_max, bezier_fn):
 
 def main():
 
-    theta = 0.1
+    theta = np.pi / 4
     l = 10
 
     p0 = np.array([0, 0])
