@@ -44,7 +44,7 @@ def plot_hermite(params, theta, l_max):
     ax = plt.subplot(111)
     ax.set_aspect('equal', 'box')
     plt.xlim(-0.05, l_max)
-    plt.ylim(-l_max, 0.05)
+    plt.ylim(-l_max, 0.5)
     # draw vertical and angle lines
     vert_line = np.array([[0, 0], [0, -l_max]])
     angle_line = l_max * np.array([[0, 0], [np.sin(theta), -np.cos(theta)]])
@@ -58,6 +58,9 @@ def plot_hermite(params, theta, l_max):
     f = hermite(p0, m0, p1, m1)
     ft = np.array([f(ti) for ti in t])
     plt.plot(ft[:, 0], ft[:, 1], 'r-')
+    plt.title('Hermite Curve Model of Soft Grippers')
+    plt.xlabel('Position in x')
+    plt.ylabel('Position in y')    
     plt.show(block=True)
 
 def main():
@@ -77,7 +80,7 @@ def main():
     # need to solve for a, b, c
     
     # given variables
-    theta = np.pi / 3
+    theta = 20*(np.pi / 180)
     l = 1
 
     # define the objective
