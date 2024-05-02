@@ -117,6 +117,32 @@ def plot_curve(params, theta, l_max, bezier_fn, ax=None):
     print(f"Curve length for {bezier_fn.__name__}: ", curve.length)
     curve.plot(num_pts=100, ax=ax)
 
+
+# Returns the bezier gripper curve for a given theta and length l
+def get_bezier_curve(theta, l, bezier_fn=get_cubic_bezier):
+    compute_objective = lambda params: objective(params, theta, l, bezier_fn)
+
+    # initial guess
+    x0 = [0.5, 0.5, 0.5]
+
+    # define the constraints
+    constraints = f'''
+    x0 >= 0
+    x0 <= {l}
+    x1 >= 0.0
+    x1 <= 10
+    x2 >= 0.0
+    x2 <= x0 * {np.sin(theta)} / {np.abs(np.cos(theta)) + 1e-6}
+    '''
+
+    generated_constraints = generate_constraint(generate_solvers(constraints, nvars=3))
+
+    # solve the problem
+    result = diffev2(compute_objective, x0=x0, constraints=generated_constraints, npop=40, gtol=10)
+
+    # generate the curve
+    return bezier_fn(result, theta)
+
 def main():
 
     # f : R -> R^2, t in [0, 1] -> (x(t), y(t)) given by a quadratic bezier curve
@@ -131,7 +157,7 @@ def main():
     # params are (a)
 
 
-    theta = np.pi /20
+    theta = np.pi / 1.01
     l = 1
     # get_quadratic_bezier_cp is redundant with the right angle one
     for bezier_fn in get_quadratic_bezier_right_angle, get_cubic_bezier:
@@ -156,7 +182,7 @@ def main():
             generated_constraints = generate_constraint(generate_solvers(constraints, nvars=3))
 
             # solve the problem
-            result = diffev2(compute_objective, x0=x0, constraints=generated_constraints, npop=40, gtol=10)
+            result = diffev2(compute_objective, x0=x0, constraints=generated_constraints, npop=1000, gtol=100)
             plot_curve(result, theta, l, bezier_fn)
         except ValueError as e:
             print(e)
