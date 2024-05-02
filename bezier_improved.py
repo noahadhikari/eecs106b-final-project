@@ -86,18 +86,17 @@ def objective(params, theta, l, bezier_fn):
         p1 = curve.nodes[:, -1].reshape(2, 1)
         p2 = curve.nodes[:, -2].reshape(2, 1)
         angle = find_angle(p0, p1, p2)
+        # angle calc is unnecessary now, but was useful for the bezier cp version
         return 1 / l * (curve.length - l) ** 2 + (np.sin(np.pi/2) - np.sin(angle)) ** 2 + (np.cos(np.pi/2) - np.cos(angle)) ** 2
-
-
-
+    
     return obj(bezier_fn(params, theta))
 
 def plot_curve(params, theta, l_max, bezier_fn, ax=None):
     curve = bezier_fn(params, theta)
     if ax is None:
         ax = plt.subplot(111)
-    plt.xlim(-0.5, l_max)
-    plt.ylim(-l_max, 0.5)
+    plt.xlim(-0.05, l_max)
+    plt.ylim(-l_max, 0.05)
 
     # make the plot square
     ax.set_aspect('equal', 'box')
@@ -112,8 +111,8 @@ def plot_curve(params, theta, l_max, bezier_fn, ax=None):
     # plot bezier control points, and lines from endpoints to control point
 
     # connect the dots
-    # for i in range(len(curve.nodes[0]) - 1):
-    #     plt.plot(curve.nodes[0, i:i + 2], curve.nodes[1, i:i + 2], 'ro--')
+    for i in range(len(curve.nodes[0]) - 1):
+        plt.plot(curve.nodes[0, i:i + 2], curve.nodes[1, i:i + 2], 'ro--')
 
     print(f"Curve length for {bezier_fn.__name__}: ", curve.length)
     curve.plot(num_pts=100, ax=ax)
@@ -132,9 +131,10 @@ def main():
     # params are (a)
 
 
-    theta = np.pi / 3
+    theta = np.pi /20
     l = 1
-    for bezier_fn in get_quadratic_bezier_cp, get_quadratic_bezier_right_angle, get_cubic_bezier:
+    # get_quadratic_bezier_cp is redundant with the right angle one
+    for bezier_fn in get_quadratic_bezier_right_angle, get_cubic_bezier:
         try:
             compute_objective = lambda params: objective(params, theta, l, bezier_fn)
 
