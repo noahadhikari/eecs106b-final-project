@@ -96,7 +96,7 @@ def plot_curve(params, theta, l_max, bezier_fn, ax=None):
     if ax is None:
         ax = plt.subplot(111)
     plt.xlim(-0.05, l_max)
-    plt.ylim(-l_max, 0.05)
+    plt.ylim(-l_max, 0.5)
 
     # make the plot square
     ax.set_aspect('equal', 'box')
@@ -107,7 +107,10 @@ def plot_curve(params, theta, l_max, bezier_fn, ax=None):
     angle_line = l_max * np.array([[0, 0], [np.sin(theta), -np.cos(theta)]])
     plt.plot(vert_line[:, 0], vert_line[:, 1], 'k-')
     plt.plot(angle_line[:, 0], angle_line[:, 1], 'k-')
-
+    plt.title('Bezier Curve Model of Soft Grippers')
+    plt.xlabel('Position in x (m)')
+    plt.ylabel('Position in y (m)')
+    plt.legend(['Quadratic', 'Cubic'])
     # plot bezier control points, and lines from endpoints to control point
 
     # connect the dots
@@ -157,7 +160,8 @@ def main():
     # params are (a)
 
 
-    theta = np.pi / 1.01
+    theta = np.pi / 20
+
     l = 1
     # get_quadratic_bezier_cp is redundant with the right angle one
     for bezier_fn in get_quadratic_bezier_right_angle, get_cubic_bezier:
@@ -182,7 +186,7 @@ def main():
             generated_constraints = generate_constraint(generate_solvers(constraints, nvars=3))
 
             # solve the problem
-            result = diffev2(compute_objective, x0=x0, constraints=generated_constraints, npop=1000, gtol=100)
+            result = diffev2(compute_objective, x0=x0, constraints=generated_constraints, npop=40, gtol=100)
             plot_curve(result, theta, l, bezier_fn)
         except ValueError as e:
             print(e)
