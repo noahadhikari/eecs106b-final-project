@@ -82,12 +82,12 @@ def get_quadratic_bezier_right_angle(params, theta):
 
 def objective(params, theta, l, bezier_fn):
     def obj(curve):
-        p0 = curve.nodes[:, 0].reshape(2, 1)
-        p1 = curve.nodes[:, -1].reshape(2, 1)
-        p2 = curve.nodes[:, -2].reshape(2, 1)
-        angle = find_angle(p0, p1, p2)
+        # p0 = curve.nodes[:, 0].reshape(2, 1)
+        # p1 = curve.nodes[:, -1].reshape(2, 1)
+        # p2 = curve.nodes[:, -2].reshape(2, 1)
+        # angle = find_angle(p0, p1, p2)
         # angle calc is unnecessary now, but was useful for the bezier cp version
-        return 1 / l * (curve.length - l) ** 2 + (np.sin(np.pi/2) - np.sin(angle)) ** 2 + (np.cos(np.pi/2) - np.cos(angle)) ** 2
+        return 1 / l * (curve.length - l) ** 2 #+ (np.sin(np.pi/2) - np.sin(angle)) ** 2 + (np.cos(np.pi/2) - np.cos(angle)) ** 2
     
     return obj(bezier_fn(params, theta))
 
@@ -133,7 +133,7 @@ def get_bezier_curve(theta, l, bezier_fn=get_cubic_bezier):
     x0 >= 0
     x0 <= {l}
     x1 >= 0.0
-    x1 <= 10
+    x1 <= 100
     x2 >= 0.0
     x2 <= x0 * {np.sin(theta)} / {np.abs(np.cos(theta)) + 1e-6}
     '''
@@ -141,7 +141,7 @@ def get_bezier_curve(theta, l, bezier_fn=get_cubic_bezier):
     generated_constraints = generate_constraint(generate_solvers(constraints, nvars=3))
 
     # solve the problem
-    result = diffev2(compute_objective, x0=x0, constraints=generated_constraints, npop=40, gtol=10)
+    result = diffev2(compute_objective, x0=x0, constraints=generated_constraints, npop=50, gtol=50)
 
     # generate the curve
     return bezier_fn(result, theta)
@@ -160,8 +160,7 @@ def main():
     # params are (a)
 
 
-    theta = np.pi / 20
-
+    theta = np.pi / 3
     l = 1
     # get_quadratic_bezier_cp is redundant with the right angle one
     for bezier_fn in get_quadratic_bezier_right_angle, get_cubic_bezier:
