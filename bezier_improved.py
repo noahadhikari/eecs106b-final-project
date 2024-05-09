@@ -160,7 +160,7 @@ def main():
     # params are (a)
 
 
-    theta = 50*(np.pi/180)
+    theta = (np.pi / 180) * 20
     l = 1
     # get_quadratic_bezier_cp is redundant with the right angle one
     for bezier_fn in get_quadratic_bezier_right_angle, get_cubic_bezier:
